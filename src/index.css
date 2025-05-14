@@ -1,0 +1,77 @@
+/* Global Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4; /* Light background for contrast */
+  }
+  
+  /* Header Styles */
+  .header {
+    background-color: #007bff; /* Bootstrap primary color */
+    color: white;
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .header h1 {
+    margin: 0;
+  }
+  
+  .header nav ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .header nav ul li {
+    display: inline;
+    margin: 0 15px;
+  }
+  
+  /* Hero Section Styles */
+  .hero {
+    background: url('../assets/hero-image.jpg') no-repeat center center;
+    background-size: cover; /* Ensure the image covers the section */
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-align: center;
+    padding: 20px;
+  }
+  
+  /* Bytes Section Styles */
+  .bytes {
+    background-color: white; /* White background for content */
+    padding: 20px;
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    margin: 20px; /* Margin around the section */
+  }
+  
+  .bytes h3 {
+    margin-top: 0; /* Remove top margin */
+  }
+  
+  /* Quiz Styles */
+  .quiz {
+    margin-top: 20px; /* Space above the quiz */
+  }
+  
+  .quiz label {
+    display: block; /* Stack radio buttons */
+    margin: 10px 0; /* Space between options */
+  }
+  
+  /* Footer Styles */
+  .footer {
+    background-color: #f8f9fa; /* Light footer background */
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .footer-links {
+    display: flex;
+    justify-content: center;
+  }
