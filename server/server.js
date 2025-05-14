@@ -1,11 +1,11 @@
 const express = require('express');
 const dotenv = require('dotenv');
-const cors = require('cors');
 const morgan = require('morgan');
 const connectDB = require('./config/db');
 const byteRoutes = require('./routes/byteRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const notFound = require('./middleware/notFound');
+const cors = require('cors');
 
 // Load env vars
 dotenv.config();
@@ -17,7 +17,10 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173', // React frontend's URL
+  methods: ['GET', 'POST'],
+}));
 
 // Logger middleware for development
 if (process.env.NODE_ENV === 'development') {
@@ -51,3 +54,4 @@ process.on('unhandledRejection', (err, promise) => {
   // Close server & exit process
   process.exit(1);
 });
+module.exports = app
