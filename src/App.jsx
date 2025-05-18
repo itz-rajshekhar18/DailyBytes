@@ -1,30 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import Bytes from './components/Bytes';
+import BytesBrowser from './components/BytesBrowser';
+import ByteDetail from './components/ByteDetail';
 import Footer from './components/Footer';
 
 const App = () => {
-    const [data, setData] = useState([]);
-
-    useEffect(() => {
-        axios.get('http://localhost:5001/api/byte') // Make sure this URL is correct
-            .then(response => {
-                setData(response.data);
-            })
-            .catch(error => {
-                console.error('Error fetching data:', error);
-            });
-    }, []);
-
     return (
-        <div className="app">
-            <Header />
-            <Hero />
-            <Bytes data={data} /> {/* Passing the data to the Bytes component */}
-            <Footer />
-        </div>
+        <Router>
+            <div className="app">
+                <Header />
+                <Routes>
+                    <Route path="/" element={
+                        <>
+                            <Hero />
+                            <Bytes />
+                            <BytesBrowser />
+                        </>
+                    } />
+                    <Route path="/byte/:id" element={<ByteDetail />} />
+                </Routes>
+                <Footer />
+            </div>
+        </Router>
     );
 };
 
