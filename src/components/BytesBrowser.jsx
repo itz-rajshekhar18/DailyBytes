@@ -8,21 +8,53 @@ const BytesBrowser = () => {
   const [error, setError] = useState(null);
   const [category, setCategory] = useState('');
   const [tag, setTag] = useState('');
-  const [visibleCount, setVisibleCount] = useState(5);
   const [categories, setCategories] = useState([]);
+  const [tags, setTags] = useState([]);
+  const [pagination, setPagination] = useState({
+    totalCount: 0,
+    totalPages: 0,
+    currentPage: 1,
+    pageSize: 6
+  });
 
-  // Fetch all bytes
-  useEffect(() => {
+  // Fetch bytes with filters
+  const fetchBytes = (selectedCategory = '', selectedTag = '', page = 1) => {
     setLoading(true);
-    axios.get('http://localhost:5001/api/byte')
+    
+    // Build query parameters
+    let url = 'http://localhost:5001/api/byte?';
+    const params = new URLSearchParams();
+    
+    if (selectedCategory) {
+      params.append('category', selectedCategory);
+    }
+    
+    if (selectedTag) {
+      params.append('tag', selectedTag);
+    }
+    
+    params.append('chunkCount', page);
+    url += params.toString();
+    
+    axios.get(url)
       .then(response => {
-        const bytes = response.data.data;
-        setAllBytes(bytes);
-        setFilteredBytes(bytes);
+        const { data, pagination, metadata } = response.data;
         
-        // Extract unique categories
-        const uniqueCategories = [...new Set(bytes.map(byte => byte.category))];
-        setCategories(uniqueCategories);
+        // Set bytes data
+        setAllBytes(data);
+        setFilteredBytes(data);
+        
+        // Set pagination information
+        setPagination(pagination);
+        
+        // Set categories and tags from metadata
+        if (metadata?.categories) {
+          setCategories(metadata.categories);
+        }
+        
+        if (metadata?.tags) {
+          setTags(metadata.tags);
+        }
       })
       .catch(error => {
         console.error('Error fetching bytes:', error);
@@ -31,89 +63,78 @@ const BytesBrowser = () => {
       .finally(() => {
         setLoading(false);
       });
+  };
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchBytes();
   }, []);
 
   // Apply filters
-  useEffect(() => {
-    // Filter bytes based on selected category and tag
-    let filtered = [...allBytes];
-    
-    if (category) {
-      filtered = filtered.filter(byte => byte.category === category);
-    }
-    
-    if (tag) {
-      filtered = filtered.filter(byte => byte.tags && byte.tags.includes(tag));
-    }
-    
-    setFilteredBytes(filtered);
-    setVisibleCount(5); // Reset visible count when filter changes
-  }, [category, tag, allBytes]);
-
-  // Apply filters
   const handleApplyFilters = () => {
-    // No need to call API - filters are applied in the useEffect
+    fetchBytes(category, tag, 1);
   };
 
   // Load more bytes
   const handleLoadMore = () => {
-    setVisibleCount(prev => prev + 5);
+    if (pagination.currentPage < pagination.totalPages) {
+      fetchBytes(category, tag, pagination.currentPage + 1);
+    }
   };
 
   // Reset filters
   const handleResetFilters = () => {
     setCategory('');
     setTag('');
-    // Filters will be cleared by the useEffect
+    fetchBytes('', '', 1);
   };
-
-  // Check if more bytes are available
-  const hasMore = filteredBytes.length > visibleCount;
-
-  // Display only the visible number of bytes
-  const visibleBytes = filteredBytes.slice(0, visibleCount);
 
   return (
     <section className="bytes-browser">
       <h2>Browse Psychology Bytes</h2>
       
       <div className="filters">
-        <div className="filter-item">
-          <label htmlFor="category">Category:</label>
-          <select 
-            id="category" 
-            value={category} 
-            onChange={(e) => setCategory(e.target.value)}
-          >
-            <option value="">All Categories</option>
-            {categories.map((cat, index) => (
-              <option key={index} value={cat}>{cat}</option>
-            ))}
-          </select>
-        </div>
-        
-        <div className="filter-item">
-          <label htmlFor="tag">Tag:</label>
-          <input 
-            type="text" 
-            id="tag" 
-            value={tag} 
-            onChange={(e) => setTag(e.target.value)} 
-            placeholder="Enter a tag"
-          />
+        <div className="filter-group">
+          <div className="filter-item">
+            <label htmlFor="category">Category:</label>
+            <select 
+              id="category" 
+              value={category} 
+              onChange={(e) => setCategory(e.target.value)}
+            >
+              <option value="">All Categories</option>
+              {categories.map((cat, index) => (
+                <option key={index} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="filter-item">
+            <label htmlFor="tag">Tag:</label>
+            <select
+              id="tag"
+              value={tag}
+              onChange={(e) => setTag(e.target.value)}
+            >
+              <option value="">All Tags</option>
+              {tags.map((tagItem, index) => (
+                <option key={index} value={tagItem}>{tagItem}</option>
+              ))}
+            </select>
+          </div>
         </div>
         
         <div className="filter-actions">
-          <button onClick={handleApplyFilters}>Apply Filters</button>
-          <button onClick={handleResetFilters}>Reset</button>
+          <button onClick={handleApplyFilters} className="apply-btn">Apply Filters</button>
+          <button onClick={handleResetFilters} className="reset-btn">Reset</button>
         </div>
       </div>
       
       {error && <p className="error">{error}</p>}
       
       <div className="bytes-list">
-        {visibleBytes.length > 0 ? (
-          visibleBytes.map((byte, index) => (
+        {filteredBytes.length > 0 ? (
+          filteredBytes.map((byte, index) => (
             <div key={byte._id} className="byte-card">
               <h3>{byte.title}</h3>
               <p>{byte.summary}</p>
@@ -140,12 +161,12 @@ const BytesBrowser = () => {
       
       {loading && <p>Loading...</p>}
       
-      {hasMore && !loading && (
+      {pagination.currentPage < pagination.totalPages && !loading && (
         <button 
           className="load-more" 
           onClick={handleLoadMore}
         >
-          Load More
+          Load More ({pagination.currentPage} of {pagination.totalPages})
         </button>
       )}
     </section>
