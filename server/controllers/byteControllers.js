@@ -56,12 +56,57 @@ const getTodayByte = asyncHandler(async (req, res) => {
 // @route   GET /api/byte
 // @access  Public
 const getAllBytes = asyncHandler(async (req, res) => {
-  const bytes = await Byte.find().sort({ datePublished: -1 });
+  // Extract query parameters
+  const { category, tag, chunkCount = 1 } = req.query;
+  
+  // Set fixed page size
+  const pageSize = 6;
+  const page = Math.max(1, parseInt(chunkCount));
+  
+  // Build filter object
+  const filter = {};
+  
+  // Add category filter if provided
+  if (category) {
+    filter.category = category;
+  }
+  
+  // Add tag filter if provided
+  if (tag) {
+    filter.tags = { $in: [tag] }; // Use $in operator for array field
+  }
+  
+  // Count total matching documents
+  const totalCount = await Byte.countDocuments(filter);
+  
+  // Calculate total pages
+  const totalPages = Math.ceil(totalCount / pageSize);
+  
+  // Fetch paginated and filtered data
+  const bytes = await Byte.find(filter)
+    .sort({ datePublished: -1 })
+    .skip((page - 1) * pageSize)
+    .limit(pageSize);
+    
+  // Get all categories (regardless of current filter)
+  const allCategories = await Byte.distinct('category');
+  
+  // Get all tags (optional, might be useful for tag filtering too)
+  const allTags = await Byte.distinct('tags');
 
   res.status(200).json({
     success: true,
-    count: bytes.length,
     data: bytes,
+    pagination: {
+      totalCount,
+      totalPages,
+      currentPage: page,
+      pageSize
+    },
+    metadata: {
+      categories: allCategories,
+      tags: allTags
+    }
   });
 });
 
