@@ -5,14 +5,14 @@ const { OAuth2Client } = require('google-auth-library');
 
 // Configure OAuth client
 const oauth2Client = new OAuth2Client(
-  process.env.GOOGLE_CLIENT_ID || '530698123278-3cn31ts9qdpn2ted90mnfds3rg0kbcgb.apps.googleusercontent.com',
-  process.env.GOOGLE_CLIENT_SECRET || 'dummy_secret_for_development',
-  process.env.GOOGLE_REDIRECT_URI || 'http://localhost:5001/api/users/google/callback'
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT_URI
 );
 
 // Generate JWT
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'dailybyte_jwt_secret_dev_123456', {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: '30d',
   });
 };
@@ -125,7 +125,7 @@ const googleCallback = asyncHandler(async (req, res) => {
   const { code } = req.query;
   
   if (!code) {
-    return res.redirect('http://localhost:5173/login?error=Missing+authorization+code');
+    return res.redirect(`${process.env.FRONTEND_URL}/login?error=Missing+authorization+code`);
   }
   
   try {
@@ -141,10 +141,10 @@ const googleCallback = asyncHandler(async (req, res) => {
     // Generate token for the test user
     const token = generateToken(testUser._id);
     
-    return res.redirect(`http://localhost:5173/google-auth-success?token=${token}&userId=${testUser._id}&firstName=${encodeURIComponent(testUser.firstName)}&lastName=${encodeURIComponent(testUser.lastName)}&email=${encodeURIComponent(testUser.email)}&profilePicture=${encodeURIComponent(testUser.profilePicture)}`);
+    return res.redirect(`${process.env.FRONTEND_URL}/google-auth-success?token=${token}&userId=${testUser._id}&firstName=${encodeURIComponent(testUser.firstName)}&lastName=${encodeURIComponent(testUser.lastName)}&email=${encodeURIComponent(testUser.email)}&profilePicture=${encodeURIComponent(testUser.profilePicture)}`);
     
   } catch (error) {
-    return res.redirect(`http://localhost:5173/login?error=Authentication+failed&details=${encodeURIComponent(error.message)}`);
+    return res.redirect(`${process.env.FRONTEND_URL}/login?error=Authentication+failed&details=${encodeURIComponent(error.message)}`);
   }
 });
 
