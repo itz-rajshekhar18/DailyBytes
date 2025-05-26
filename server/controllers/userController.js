@@ -62,59 +62,91 @@ const loginUser = asyncHandler(async (req, res) => {
   // Check for user email
   const user = await User.findOne({ email });
 
-  if (user && (await user.matchPassword(password))) {
-    res.json({
-      _id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      token: generateToken(user._id),
-    });
-  } else {
+  if (!user) {
     res.status(401);
-    throw new Error('Invalid email or password');
+    throw new Error('No account found with this email. Please sign up.');
   }
-});
+
+  if (!(await user.matchPassword(password))) {
+    res.status(401);
+    throw new Error('Invalid password');
+  }
+
+  res.json({
+    _id: user._id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    token: generateToken(user._id),
+  });
+  }
+);
 
 // @desc    Google OAuth login/register
 // @route   POST /api/users/google
 // @access  Public
 const googleAuth = asyncHandler(async (req, res) => {
-  const { firstName, lastName, email, googleId, profilePicture } = req.body;
+  try {
+    const { firstName, lastName, email, googleId, profilePicture } = req.body;
 
-  // Check if user exists
-  let user = await User.findOne({ email });
+    // Validate required fields
+    if (!email || !googleId) {
+      res.status(400);
+      throw new Error('Missing required Google authentication data');
+    }
 
-  if (user) {
-    // Update Google ID if it doesn't exist
-    if (!user.googleId) {
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      res.status(400);
+      throw new Error('Invalid email format');
+    }
+
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // Update existing user's Google information
       user.googleId = googleId;
+      user.firstName = user.firstName || firstName;
+      user.lastName = user.lastName || lastName;
       user.profilePicture = profilePicture || user.profilePicture;
       await user.save();
-    }
-  } else {
-    // Create new user
-    user = await User.create({
-      firstName,
-      lastName,
-      email,
-      googleId,
-      profilePicture,
-    });
-  }
+    } else {
+      // Validate names before creating new user
+      if (!firstName || !lastName) {
+        res.status(400);
+        throw new Error('First name and last name are required');
+      }
 
-  if (user) {
+      // Create new user with Google info
+      user = await User.create({
+        firstName: firstName || email.split('@')[0],
+        lastName: lastName || '',
+        email,
+        googleId,
+        profilePicture,
+      });
+    }
+
+    if (!user) {
+      res.status(500);
+      throw new Error('Failed to create or update user account');
+    }
+
+    const token = generateToken(user._id);
+
     res.status(200).json({
       _id: user._id,
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
       profilePicture: user.profilePicture,
-      token: generateToken(user._id),
+      token,
     });
-  } else {
-    res.status(400);
-    throw new Error('Invalid user data');
+  } catch (error) {
+    console.error('Google auth error:', error);
+    res.status(error.status || 500);
+    throw new Error(error.message || 'Failed to authenticate with Google');
   }
 });
 
@@ -129,21 +161,42 @@ const googleCallback = asyncHandler(async (req, res) => {
   }
   
   try {
-    // Create a test user for development
-    const testUser = {
-      _id: '123456789012345678901234',
-      firstName: null,
-      lastName: null,
-      email: 'test.user@example.com',
-      profilePicture: 'https://ui-avatars.com/api/?name=T+U&background=0D8ABC&color=fff'
-    };
+    // Get token from Google
+    const { tokens } = await oauth2Client.getToken(code);
     
-    // Generate token for the test user
-    const token = generateToken(testUser._id);
+    // Verify the ID token
+    const ticket = await oauth2Client.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
     
-    return res.redirect(`${process.env.FRONTEND_URL}/google-auth-success?token=${token}&userId=${testUser._id}&firstName=${encodeURIComponent(testUser.firstName)}&lastName=${encodeURIComponent(testUser.lastName)}&email=${encodeURIComponent(testUser.email)}&profilePicture=${encodeURIComponent(testUser.profilePicture)}`);
+    const payload = ticket.getPayload();
+    
+    // Find or create user
+    let user = await User.findOne({ email: payload.email });
+    
+    if (!user) {
+      user = await User.create({
+        firstName: payload.given_name,
+        lastName: payload.family_name,
+        email: payload.email,
+        googleId: payload.sub,
+        profilePicture: payload.picture
+      });
+    } else if (!user.googleId) {
+      // Update existing user with Google info
+      user.googleId = payload.sub;
+      user.profilePicture = user.profilePicture || payload.picture;
+      await user.save();
+    }
+    
+    // Generate token
+    const token = generateToken(user._id);
+    
+    return res.redirect(`${process.env.FRONTEND_URL}/google-auth-success?token=${token}&userId=${user._id}&firstName=${encodeURIComponent(user.firstName)}&lastName=${encodeURIComponent(user.lastName)}&email=${encodeURIComponent(user.email)}&profilePicture=${encodeURIComponent(user.profilePicture)}`);
     
   } catch (error) {
+    console.error('Google OAuth error:', error);
     return res.redirect(`${process.env.FRONTEND_URL}/login?error=Authentication+failed&details=${encodeURIComponent(error.message)}`);
   }
 });
@@ -174,4 +227,4 @@ module.exports = {
   googleAuth,
   googleCallback,
   getUserProfile,
-}; 
+};

@@ -41,4 +41,51 @@ const validateByteData = (req, res, next) => {
   next();
 };
 
-module.exports = { validateByteData };
+// User registration validation middleware
+const validateUserRegistration = (req, res, next) => {
+  const { firstName, lastName, email, password } = req.body;
+
+  // Check if all required fields are present
+  if (!firstName || !lastName || !email || !password) {
+    res.status(400);
+    throw new Error('Please provide all required fields');
+  }
+
+  // Validate names
+  if (firstName.length < 2 || firstName.length > 25) {
+    res.status(400);
+    throw new Error('First name must be between 2 and 25 characters');
+  }
+
+  if (lastName.length < 2 || lastName.length > 25) {
+    res.status(400);
+    throw new Error('Last name must be between 2 and 25 characters');
+  }
+
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRegex.test(email)) {
+    res.status(400);
+    throw new Error('Please provide a valid email address');
+  }
+
+  // Validate password strength
+  if (!password || password.length < 6) {
+    res.status(400);
+    throw new Error('Password must be at least 6 characters long');
+  }
+
+  // Validate name fields
+  if (!firstName || firstName.trim().length === 0) {
+    res.status(400);
+    throw new Error('First name is required');
+  }
+
+  next();
+};
+
+// Export both validation middlewares
+module.exports = {
+  validateByteData,
+  validateUserRegistration
+};

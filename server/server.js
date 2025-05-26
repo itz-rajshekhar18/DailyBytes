@@ -7,29 +7,10 @@ const userRoutes = require('./routes/userRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const notFound = require('./middleware/notFound');
 const cors = require('cors');
+const { OAuth2Client } = require('google-auth-library');
 
 // Load env vars
 dotenv.config();
-
-// Set fallback for critical environment variables
-if (!process.env.JWT_SECRET) {
-    process.env.JWT_SECRET="hjhi3ih34ui34rbrj"
-}
-
-// Verify Google OAuth credentials
-const verifyGoogleCredentials = () => {
-  const clientId = process.env.GOOGLE_CLIENT_ID || '530698123278-3cn31ts9qdpn2ted90mnfds3rg0kbcgb.apps.googleusercontent.com';
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET || 'dummy_secret_for_development';
-
-  
-  if (clientSecret === 'dummy_secret_for_development') {
-    console.warn('WARNING: Using dummy Google client secret. Google authentication may not work correctly!');
-    console.warn('To fix: Set GOOGLE_CLIENT_SECRET environment variable with your actual Google client secret');
-  }
-};
-
-// Run verification
-verifyGoogleCredentials();
 
 // Connect to database
 connectDB();
@@ -39,11 +20,13 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cors({
-  origin: ['http://localhost:5173'], // Allow both origins
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  origin: process.env.CLIENT_URL || 'http://localhost:5173',
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Cross-Origin-Opener-Policy', 'Cross-Origin-Embedder-Policy']
 }));
+
 
 // Logger middleware for development
 if (process.env.NODE_ENV === 'development') {
@@ -65,6 +48,43 @@ app.get('/', (req, res) => {
 // Error handling middleware
 app.use(notFound);
 app.use(errorHandler);
+
+// Verify Google OAuth credentials
+const verifyGoogleCredentials = () => {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const backendUrl = process.env.BACKEND_URL || 'http://localhost:5001';
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+  if (!clientId || clientId === 'your_client_id_here') {
+    console.error('ERROR: GOOGLE_CLIENT_ID environment variable is not set properly');
+    process.exit(1);
+  }
+
+  if (!clientSecret || clientSecret === 'your_client_secret_here') {
+    console.error('ERROR: GOOGLE_CLIENT_SECRET environment variable is not set properly');
+    process.exit(1);
+  }
+
+  // Configure OAuth client
+  const oauth2Client = new OAuth2Client(
+    clientId,
+    clientSecret,
+    `${backendUrl}/api/users/google/callback`
+  );
+
+  return {
+    oauth2Client,
+    clientId,
+    clientSecret,
+    backendUrl,
+    frontendUrl
+  };
+};
+
+// Run verification
+const googleConfig = verifyGoogleCredentials();
+global.oauth2Client = googleConfig.oauth2Client;
 
 // Start server
 const PORT = process.env.PORT || 5001;
