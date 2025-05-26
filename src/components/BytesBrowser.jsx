@@ -1,15 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import './Bytes.css';
 
 const BytesBrowser = () => {
+  const navigate = useNavigate();
   const [allBytes, setAllBytes] = useState([]);
   const [filteredBytes, setFilteredBytes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [category, setCategory] = useState('');
-  const [tag, setTag] = useState('');
+  const [categorySearch, setCategorySearch] = useState('');
+  const [tagSearch, setTagSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedTag, setSelectedTag] = useState('');
   const [categories, setCategories] = useState([]);
   const [tags, setTags] = useState([]);
+  const [showCategorySuggestions, setShowCategorySuggestions] = useState(false);
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const [pagination, setPagination] = useState({
     totalCount: 0,
     totalPages: 0,
@@ -17,44 +24,63 @@ const BytesBrowser = () => {
     pageSize: 6
   });
 
+  const categoryRef = useRef(null);
+  const tagRef = useRef(null);
+
+  // Filter suggestions with highlighting
+  const filteredCategories = useMemo(() => {
+    if (!categorySearch) return [];
+    const searchTerm = categorySearch.toLowerCase();
+    return categories
+      .filter(cat => cat.toLowerCase().includes(searchTerm))
+      .sort((a, b) => {
+        // Sort exact matches first, then by starting with search term, then alphabetically
+        const aLower = a.toLowerCase();
+        const bLower = b.toLowerCase();
+        if (aLower === searchTerm && bLower !== searchTerm) return -1;
+        if (bLower === searchTerm && aLower !== searchTerm) return 1;
+        if (aLower.startsWith(searchTerm) && !bLower.startsWith(searchTerm)) return -1;
+        if (bLower.startsWith(searchTerm) && !aLower.startsWith(searchTerm)) return 1;
+        return a.localeCompare(b);
+      });
+  }, [categories, categorySearch]);
+
+  const filteredTags = useMemo(() => {
+    if (!tagSearch) return [];
+    const searchTerm = tagSearch.toLowerCase();
+    return tags
+      .filter(tag => tag.toLowerCase().includes(searchTerm))
+      .sort((a, b) => {
+        const aLower = a.toLowerCase();
+        const bLower = b.toLowerCase();
+        if (aLower === searchTerm && bLower !== searchTerm) return -1;
+        if (bLower === searchTerm && aLower !== searchTerm) return 1;
+        if (aLower.startsWith(searchTerm) && !bLower.startsWith(searchTerm)) return -1;
+        if (bLower.startsWith(searchTerm) && !aLower.startsWith(searchTerm)) return 1;
+        return a.localeCompare(b);
+      });
+  }, [tags, tagSearch]);
+
   // Fetch bytes with filters
-  const fetchBytes = (selectedCategory = '', selectedTag = '', page = 1) => {
+  const fetchBytes = useCallback((category = '', tag = '', page = 1) => {
     setLoading(true);
-    
-    // Build query parameters
     let url = 'http://localhost:5001/api/byte?';
     const params = new URLSearchParams();
     
-    if (selectedCategory) {
-      params.append('category', selectedCategory);
-    }
-    
-    if (selectedTag) {
-      params.append('tag', selectedTag);
-    }
-    
+    if (category) params.append('category', category);
+    if (tag) params.append('tag', tag);
     params.append('chunkCount', page);
     url += params.toString();
     
     axios.get(url)
       .then(response => {
         const { data, pagination, metadata } = response.data;
-        
-        // Set bytes data
         setAllBytes(data);
         setFilteredBytes(data);
-        
-        // Set pagination information
         setPagination(pagination);
         
-        // Set categories and tags from metadata
-        if (metadata?.categories) {
-          setCategories(metadata.categories);
-        }
-        
-        if (metadata?.tags) {
-          setTags(metadata.tags);
-        }
+        if (metadata?.categories) setCategories(metadata.categories);
+        if (metadata?.tags) setTags(metadata.tags);
       })
       .catch(error => {
         console.error('Error fetching bytes:', error);
@@ -63,31 +89,76 @@ const BytesBrowser = () => {
       .finally(() => {
         setLoading(false);
       });
+  }, []);
+
+  // Debounce function
+  const debounce = (func, delay) => {
+    let timeoutId;
+    return function (...args) {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => func.apply(this, args), delay);
+    };
+  };
+
+  // Debounced fetch
+  const debouncedFetch = useCallback(
+    debounce((category, tag) => {
+      fetchBytes(category, tag, 1);
+    }, 300),
+    []
+  );
+
+  // Handle category selection
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category);
+    setCategorySearch(category);
+    setShowCategorySuggestions(false);
+    debouncedFetch(category, selectedTag);
+  };
+
+  // Handle tag selection
+  const handleTagSelect = (tag) => {
+    setSelectedTag(tag);
+    setTagSearch(tag);
+    setShowTagSuggestions(false);
+    debouncedFetch(selectedCategory, tag);
+  };
+
+  // Handle byte card click
+  const handleByteClick = (byteId) => {
+    navigate(`/byte/${byteId}`);
   };
 
   // Initial data fetch
   useEffect(() => {
     fetchBytes();
-  }, []);
-
-  // Apply filters
-  const handleApplyFilters = () => {
-    fetchBytes(category, tag, 1);
-  };
-
-  // Load more bytes
-  const handleLoadMore = () => {
-    if (pagination.currentPage < pagination.totalPages) {
-      fetchBytes(category, tag, pagination.currentPage + 1);
-    }
-  };
+  }, [fetchBytes]);
 
   // Reset filters
   const handleResetFilters = () => {
-    setCategory('');
-    setTag('');
+    setSelectedCategory('');
+    setSelectedTag('');
+    setCategorySearch('');
+    setTagSearch('');
     fetchBytes('', '', 1);
   };
+
+  // Handle clicks outside of suggestion lists
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (categoryRef.current && !categoryRef.current.contains(event.target)) {
+        setShowCategorySuggestions(false);
+      }
+      if (tagRef.current && !tagRef.current.contains(event.target)) {
+        setShowTagSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <section className="bytes-browser">
@@ -96,81 +167,167 @@ const BytesBrowser = () => {
       <div className="filters">
         <div className="filter-group">
           <div className="filter-item">
-            <label htmlFor="category">Category:</label>
-            <select 
-              id="category" 
-              value={category} 
-              onChange={(e) => setCategory(e.target.value)}
-            >
-              <option value="">All Categories</option>
-              {categories.map((cat, index) => (
-                <option key={index} value={cat}>{cat}</option>
-              ))}
-            </select>
+            <label>Category:</label>
+            <div className="search-container" ref={categoryRef}>
+              <input
+                type="text"
+                placeholder="Search categories..."
+                value={categorySearch}
+                onChange={(e) => {
+                  setCategorySearch(e.target.value);
+                  setShowCategorySuggestions(true);
+                  if (e.target.value === '') {
+                    setSelectedCategory('');
+                    debouncedFetch('', selectedTag);
+                  } else {
+                    debouncedFetch(e.target.value, selectedTag);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && filteredCategories.length > 0) {
+                    handleCategorySelect(filteredCategories[0]);
+                  }
+                }}
+                onFocus={() => setShowCategorySuggestions(true)}
+              />
+              {showCategorySuggestions && filteredCategories.length > 0 && (
+                <div className="suggestions-list">
+                  {filteredCategories.map((category, index) => {
+                    const lowerCategory = category.toLowerCase();
+                    const lowerSearch = categorySearch.toLowerCase();
+                    const startIndex = lowerCategory.indexOf(lowerSearch);
+                    
+                    return (
+                      <div
+                        key={index}
+                        className={`suggestion-item ${selectedCategory === category ? 'selected' : ''}`}
+                        onClick={() => handleCategorySelect(category)}
+                      >
+                        {startIndex >= 0 ? (
+                          <>
+                            {category.substring(0, startIndex)}
+                            <span className="highlight">
+                              {category.substring(startIndex, startIndex + categorySearch.length)}
+                            </span>
+                            {category.substring(startIndex + categorySearch.length)}
+                          </>
+                        ) : (
+                          category
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
-          
+
           <div className="filter-item">
-            <label htmlFor="tag">Tag:</label>
-            <select
-              id="tag"
-              value={tag}
-              onChange={(e) => setTag(e.target.value)}
-            >
-              <option value="">All Tags</option>
-              {tags.map((tagItem, index) => (
-                <option key={index} value={tagItem}>{tagItem}</option>
-              ))}
-            </select>
+            <label>Tag:</label>
+            <div className="search-container" ref={tagRef}>
+              <input
+                type="text"
+                placeholder="Search tags..."
+                value={tagSearch}
+                onChange={(e) => {
+                  setTagSearch(e.target.value);
+                  setShowTagSuggestions(true);
+                  if (e.target.value === '') {
+                    setSelectedTag('');
+                    debouncedFetch(selectedCategory, '');
+                  } else {
+                    debouncedFetch(selectedCategory, e.target.value);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && filteredTags.length > 0) {
+                    handleTagSelect(filteredTags[0]);
+                  }
+                }}
+                onFocus={() => setShowTagSuggestions(true)}
+              />
+              {showTagSuggestions && filteredTags.length > 0 && (
+                <div className="suggestions-list">
+                  {filteredTags.map((tag, index) => {
+                    const lowerTag = tag.toLowerCase();
+                    const lowerSearch = tagSearch.toLowerCase();
+                    const startIndex = lowerTag.indexOf(lowerSearch);
+                    
+                    return (
+                      <div
+                        key={index}
+                        className={`suggestion-item ${selectedTag === tag ? 'selected' : ''}`}
+                        onClick={() => handleTagSelect(tag)}
+                      >
+                        {startIndex >= 0 ? (
+                          <>
+                            {tag.substring(0, startIndex)}
+                            <span className="highlight">
+                              {tag.substring(startIndex, startIndex + tagSearch.length)}
+                            </span>
+                            {tag.substring(startIndex + tagSearch.length)}
+                          </>
+                        ) : (
+                          tag
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-        
-        <div className="filter-actions">
-          <button onClick={handleApplyFilters} className="apply-btn">Apply Filters</button>
-          <button onClick={handleResetFilters} className="reset-btn">Reset</button>
+
+          <button 
+            onClick={handleResetFilters}
+            className="reset-button"
+          >
+            Reset
+          </button>
         </div>
       </div>
-      
-      {error && <p className="error">{error}</p>}
-      
-      <div className="bytes-list">
-        {filteredBytes.length > 0 ? (
-          filteredBytes.map((byte, index) => (
-            <div key={byte._id} className="byte-card">
-              <h3>{byte.title}</h3>
-              <p>{byte.summary}</p>
-              <div className="byte-meta">
-                <span className="category">{byte.category}</span>
-                <span className="date">
-                  {new Date(byte.datePublished).toLocaleDateString()}
-                </span>
-              </div>
-              <div className="tags">
-                {byte.tags && byte.tags.map((tag, idx) => (
-                  <span key={idx} className="tag">{tag}</span>
-                ))}
-              </div>
-              <a href={`/byte/${byte._id}`} className="view-details">
-                View Details
-              </a>
-            </div>
-          ))
+
+      <div className="bytes-grid">
+        {loading ? (
+          <div className="loading">Loading...</div>
+        ) : error ? (
+          <div className="error">{error}</div>
+        ) : filteredBytes.length === 0 ? (
+          <div className="no-results">No bytes found matching the selected filters.</div>
         ) : (
-          <p>No bytes found matching your criteria.</p>
+          <>
+            {filteredBytes.map((byte) => (
+              <div 
+                key={byte._id} 
+                className="byte-card"
+                onClick={() => handleByteClick(byte._id)}
+              >
+                <h3>{byte.title}</h3>
+                <p>{byte.description}</p>
+                <div className="byte-meta">
+                  <span className="category">{byte.category}</span>
+                  <div className="tags">
+                    {byte.tags.map((tag, index) => (
+                      <span key={index} className="tag">{tag}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </>
         )}
       </div>
-      
-      {loading && <p>Loading...</p>}
-      
-      {pagination.currentPage < pagination.totalPages && !loading && (
+
+      {!loading && !error && pagination.currentPage < pagination.totalPages && (
         <button 
-          className="load-more" 
-          onClick={handleLoadMore}
+          onClick={() => fetchBytes(selectedCategory, selectedTag, pagination.currentPage + 1)}
+          className="load-more-button"
         >
-          Load More ({pagination.currentPage} of {pagination.totalPages})
+          Load More
         </button>
       )}
     </section>
   );
 };
 
-export default BytesBrowser; 
+export default BytesBrowser;

@@ -36,7 +36,7 @@ const ByteDetail = () => {
   return (
     <section className="byte-detail">
       <div className="back-link">
-        <Link to="/">← Back to all bytes</Link>
+        <Link to="/all-bytes">← Back to all bytes</Link>
       </div>
       
       <div className="byte-content">
