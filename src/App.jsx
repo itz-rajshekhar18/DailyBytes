@@ -2,12 +2,16 @@ import React, { useContext, useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './context/AuthContext';
+import { BookmarkProvider } from './context/BookmarkContext';
+import { StreakProvider } from './context/StreakContext';
 import AuthContext from './context/AuthContext';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import Bytes from './components/Bytes';
 import BytesBrowser from './components/BytesBrowser';
 import ByteDetail from './components/ByteDetail';
+import BookmarkedBytes from './components/BookmarkedBytes';
+import Badges from './components/Badges';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import Footer from './components/Footer';
@@ -106,7 +110,8 @@ const HomePage = () => (
 );
 
 const App = () => {
-  return (    <GoogleOAuthProvider
+  return (
+    <GoogleOAuthProvider
       clientId="530698123278-3cn31ts9qdpn2ted90mnfds3rg0kbcgb.apps.googleusercontent.com"
       onScriptLoadError={(error) => {
         console.error('Failed to load Google script:', error);
@@ -117,41 +122,59 @@ const App = () => {
       uxMode="popup"
     >
       <AuthProvider>
-        <Router>
-          <Routes>
-            {/* Auth routes */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/google-auth-success" element={<GoogleAuthSuccess />} />
-            
-            {/* Protected routes */}
-            <Route path="/" element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <HomePage />
-                </MainLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/all-bytes" element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <BytesBrowser />
-                </MainLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/byte/:id" element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <ByteDetail />
-                </MainLayout>
-              </ProtectedRoute>
-            } />
-            
-            {/* Redirect any unknown routes to login */}
-            <Route path="*" element={<Navigate to="/login" />} />
-          </Routes>
-        </Router>
-      </AuthProvider>
+        <BookmarkProvider>
+          <StreakProvider>
+            <Router>
+              <Routes>
+                {/* Auth routes */}
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
+                <Route path="/google-auth-success" element={<GoogleAuthSuccess />} />
+              
+              {/* Protected routes */}
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <HomePage />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/all-bytes" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <BytesBrowser />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/byte/:id" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <ByteDetail />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/bookmarks" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <BookmarkedBytes />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/badges" element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Badges />
+                  </MainLayout>
+                </ProtectedRoute>
+              } />
+              
+              {/* Redirect any unknown routes to login */}
+              <Route path="*" element={<Navigate to="/login" />} />
+            </Routes>
+          </Router>
+        </StreakProvider>
+      </BookmarkProvider>
+    </AuthProvider>
     </GoogleOAuthProvider>
   );
 };

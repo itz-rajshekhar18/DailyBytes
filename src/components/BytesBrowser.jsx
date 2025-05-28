@@ -1,10 +1,14 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import * as BiIcons from 'react-icons/bi';
+import { useBookmark } from '../context/BookmarkContext';
 import './Bytes.css';
 
 const BytesBrowser = () => {
   const navigate = useNavigate();
+  const { addBookmark, removeBookmark, isBookmarked: checkBookmarkStatus } = useBookmark();
+  const [bookmarkStates, setBookmarkStates] = useState({});
   const [allBytes, setAllBytes] = useState([]);
   const [filteredBytes, setFilteredBytes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -81,6 +85,9 @@ const BytesBrowser = () => {
         
         if (metadata?.categories) setCategories(metadata.categories);
         if (metadata?.tags) setTags(metadata.tags);
+
+        // Check bookmark status for all bytes
+        checkBookmarkStatuses(data);
       })
       .catch(error => {
         console.error('Error fetching bytes:', error);
@@ -89,7 +96,22 @@ const BytesBrowser = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [checkBookmarkStatus]);
+
+  // Check bookmark status for each byte
+  const checkBookmarkStatuses = async (bytes) => {
+    const states = {};
+    for (const byte of bytes) {
+      try {
+        const isMarked = await checkBookmarkStatus(byte._id);
+        states[byte._id] = isMarked;
+      } catch (error) {
+        console.error('Error checking bookmark status:', error);
+        states[byte._id] = false;
+      }
+    }
+    setBookmarkStates(states);
+  };
 
   // Debounce function
   const debounce = (func, delay) => {
@@ -127,6 +149,21 @@ const BytesBrowser = () => {
   // Handle byte card click
   const handleByteClick = (byteId) => {
     navigate(`/byte/${byteId}`);
+  };
+
+  const handleBookmarkClick = async (e, byteId) => {
+    e.stopPropagation();
+    try {
+      if (bookmarkStates[byteId]) {
+        await removeBookmark(byteId);
+        setBookmarkStates(prev => ({ ...prev, [byteId]: false }));
+      } else {
+        await addBookmark(byteId);
+        setBookmarkStates(prev => ({ ...prev, [byteId]: true }));
+      }
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+    }
   };
 
   // Initial data fetch
@@ -300,18 +337,28 @@ const BytesBrowser = () => {
               <div 
                 key={byte._id} 
                 className="byte-card"
-                onClick={() => handleByteClick(byte._id)}
+                onClick={() => navigate(`/byte/${byte._id}`)}
               >
-                <h3>{byte.title}</h3>
-                <p>{byte.description}</p>
-                <div className="byte-meta">
-                  <span className="category">{byte.category}</span>
-                  <div className="tags">
+                <div className="byte-header">
+                  <h3>{byte.title}</h3>
+                  <div className="byte-actions">
+                    <span className="byte-tag">{byte.category}</span>
+                    <button 
+                      className={`bookmark-btn ${bookmarkStates[byte._id] ? 'bookmarked' : ''}`}
+                      onClick={(e) => handleBookmarkClick(e, byte._id)}
+                    >
+                      {bookmarkStates[byte._id] ? <BiIcons.BiBookmarkAlt /> : <BiIcons.BiBookmark />}
+                    </button>
+                  </div>
+                </div>
+                <p className="byte-summary">{byte.summary}</p>
+                {byte.tags && byte.tags.length > 0 && (
+                  <div className="byte-tags">
                     {byte.tags.map((tag, index) => (
                       <span key={index} className="tag">{tag}</span>
                     ))}
                   </div>
-                </div>
+                )}
               </div>
             ))}
           </>

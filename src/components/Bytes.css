@@ -9,23 +9,21 @@
   font-weight: 700;
   color: #1e293b;
   margin-bottom: 1.5rem;
+  text-align: center;
 }
 
 .byte-card {
-  background-color: #fff;
+  background: #fff;
   border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-  padding: 1.75rem;
-  margin-bottom: 2rem;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid transparent;
 }
 
 .byte-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-  border-color: #6366f1;
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .byte-header {
@@ -33,13 +31,15 @@
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 1rem;
+  gap: 1rem;
 }
 
 .byte-header h3 {
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   font-weight: 600;
   color: #1e293b;
   margin: 0;
+  flex: 1;
 }
 
 .byte-tag {
@@ -53,79 +53,108 @@
 }
 
 .byte-summary {
-  color: #4a5568;
-  line-height: 1.6;
-  margin-bottom: 1.5rem;
-  font-size: 1rem;
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
 }
 
 .byte-quiz {
-  background-color: #f8fafc;
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
+  background: linear-gradient(to right, #f8fafc, #f1f5f9);
+  border-radius: 12px;
+  padding: 2rem;
+  margin: 1.5rem 0;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .byte-quiz h4 {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1.4rem;
   color: #1e293b;
-  margin-top: 0;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1.2rem;
+  font-weight: 600;
 }
 
 .quiz-question {
-  font-weight: 500;
-  color: #2d3748;
-  margin-bottom: 1.25rem;
+  color: #334155;
+  margin-bottom: 1.5rem;
+  font-size: 1.15rem;
+  line-height: 1.6;
 }
 
 .quiz-options {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  gap: 1rem;
+  margin-bottom: 1.8rem;
 }
 
 .quiz-option {
   display: flex;
   align-items: center;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  transition: all 0.2s ease;
   cursor: pointer;
 }
 
-.quiz-option input[type="radio"] {
-  margin-right: 0.75rem;
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
+.quiz-option:hover {
+  border-color: #6366f1;
+  background: #f8fafc;
 }
 
 .quiz-option.selected {
-  font-weight: 500;
+  border-color: #6366f1;
+  background: #f0f5ff;
 }
 
-.option-text {
-  color: #4a5568;
+.quiz-option.correct {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.quiz-option.incorrect {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.quiz-option input[type="radio"] {
+  margin-right: 1rem;
+  width: 20px;
+  height: 20px;
+  accent-color: #6366f1;
+}
+
+.quiz-option .option-text {
+  font-size: 1.1rem;
+  color: #1e293b;
 }
 
 .quiz-submit-btn {
-  background-color: #0078ff;
+  background: linear-gradient(to right, #6366f1, #4f46e5);
   color: white;
   border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 4px;
+  padding: 0.8rem 1.6rem;
+  border-radius: 8px;
   font-weight: 500;
+  font-size: 1.1rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
 }
 
 .quiz-submit-btn:hover {
-  background-color: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
 }
 
 .quiz-submit-btn:disabled {
-  background-color: #cbd5e0;
+  background: #e2e8f0;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .quiz-result {
@@ -301,8 +330,8 @@
 .bytes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 2rem;
-  margin-top: 2rem;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
 }
 
 .loading, .error, .no-results {
@@ -331,4 +360,131 @@
 
 .load-more-button:hover {
   background-color: #4f46e5;
+}
+
+.byte-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.bookmark-btn {
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: #64748b;
+  transition: all 0.2s ease;
+  border-radius: 50%;
+}
+
+.bookmark-btn:hover {
+  background-color: #f1f5f9;
+  color: #3182ce;
+  transform: scale(1.1);
+}
+
+.bookmark-btn.bookmarked {
+  color: #3182ce;
+}
+
+.bookmark-btn.bookmarked:hover {
+  color: #2c5282;
+}
+
+.no-bookmarks {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.no-bookmarks-icon {
+  font-size: 3rem;
+  color: #94a3b8;
+  margin-bottom: 1rem;
+}
+
+.no-bookmarks p {
+  color: #64748b;
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+}
+
+.browse-bytes-btn {
+  background-color: #3182ce;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.browse-bytes-btn:hover {
+  background-color: #2c5282;
+  transform: translateY(-1px);
+}
+
+.streak-alert {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  color: white;
+  padding: 1.2rem 1.8rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+  z-index: 1000;
+  animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.streak-alert .streak-icon {
+  font-size: 2.2rem;
+  color: #ffd700;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.streak-alert-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.streak-count {
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.badge-earned {
+  font-size: 1.1rem;
+  margin: 0;
+  color: #ffd700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%) translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) translateY(0);
+    opacity: 1;
+  }
 }

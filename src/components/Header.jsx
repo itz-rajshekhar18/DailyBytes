@@ -1,15 +1,76 @@
 import React, { useState, useContext, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import * as BiIcons from 'react-icons/bi';
+import * as FaIcons from 'react-icons/fa';
+import axios from 'axios';
 import AuthContext from '../context/AuthContext';
+import { useStreak } from '../context/StreakContext';
 import './Header.css';
 
 const Header = () => {
   const { user, logout } = useContext(AuthContext);
-  const [darkMode, setDarkMode] = useState(false);
+  const { streak, updateStreak } = useStreak();
+  const [showBadgeNotification, setShowBadgeNotification] = useState(false);
+  const [newBadge, setNewBadge] = useState(null);
+  const [isAnimating, setIsAnimating] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-  
+  const navigate = useNavigate();
+  const prevStreakRef = useRef(streak.currentStreak);
+
+  const getStreakMessage = (days) => {
+    if (days === 0) return "";
+    if (days === 1) return "First day!";
+    if (days === 7) return "Week streak!";
+    if (days === 15) return "Two weeks!";
+    if (days === 30) return "Month streak!";
+    return `${days} day streak!`;
+  };
+
+  // We only need to check for new badges, not show streak alerts
+  useEffect(() => {
+    // Don't check for badges on every render
+    // Only check when user logs in
+    if (!user) return;
+    
+    // This runs only once when the component mounts with a user
+    const checkBadges = async () => {
+      try {
+        const config = {
+          headers: {
+            Authorization: `Bearer ${user?.token}`,
+          },
+        };
+        const response = await axios.get('http://localhost:5001/api/streaks', config);
+        const newStreakData = response.data.data;
+        
+        // Check for new badges
+        if (newStreakData.badges?.length > streak.badges?.length) {
+          const newBadgeEarned = newStreakData.badges[newStreakData.badges.length - 1];
+          setNewBadge(newBadgeEarned);
+          setShowBadgeNotification(true);
+          setTimeout(() => setShowBadgeNotification(false), 5000);
+        }
+      } catch (error) {
+        console.error('Error checking badges:', error);
+      }
+    };
+    
+    // Only run on mount
+    const mounted = { current: true };
+    if (mounted.current) {
+      checkBadges();
+      mounted.current = false;
+    }
+    
+    // No dependencies to avoid running on every render
+  }, []);  // Empty dependency array means this runs once on mount
+
+  // Handle streak button click - navigate to badges page
+  const handleStreakClick = () => {
+    navigate('/badges');
+  };
+
   // Extract username from email (part before @)
   const getDisplayName = (user) => {
     if (!user) return 'User';
@@ -47,20 +108,35 @@ const Header = () => {
     };
   }, []);
   
-  // Toggle dark/light mode
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    document.body.classList.toggle('dark-mode');
-  };
-  
   // Handle logout
   const handleLogout = () => {
     logout();
     window.location.href = '/login';
   };
-  
+
+  // Handle streak animations, but only for actual streak changes, not page loads
+  // We're not going to animate the streak on page load, only when the Bytes component updates it
+  /*
+  useEffect(() => {
+    // Only animate if there was a real increase
+    if (prevStreakRef.current !== 0 && streak.currentStreak > prevStreakRef.current) {
+      setIsAnimating(true);
+      setTimeout(() => setIsAnimating(false), 1000);
+    }
+    prevStreakRef.current = streak.currentStreak;
+  }, [streak.currentStreak]);
+  */
+
   return (
     <header className="header">
+      {showBadgeNotification && newBadge && (
+        <div className="badge-notification">
+          <FaIcons.FaMedal className="badge-icon" />
+          <span>New Badge Earned: {newBadge.type === 'week-streak' ? '7-Day' : 
+            newBadge.type === 'biweek-streak' ? '15-Day' : '30-Day'} Streak!</span>
+        </div>
+      )}
+      
       <div className="header-left">
         <Link to="/" className="logo">
           <BiIcons.BiCalendarCheck className="logo-icon" />
@@ -74,17 +150,12 @@ const Header = () => {
           </Link>
           
           <Link to="/all-bytes" className="nav-link">
-            <BiIcons.BiBook />
+            <BiIcons.BiCollection />
             <span>All Bytes</span>
           </Link>
           
-          <Link to="/quests" className="nav-link">
-            <BiIcons.BiTask />
-            <span>Quests</span>
-          </Link>
-          
           <Link to="/bookmarks" className="nav-link">
-            <BiIcons.BiBookmark />
+            <BiIcons.BiBookmarkAlt />
             <span>Bookmarks</span>
           </Link>
         </nav>
@@ -92,15 +163,12 @@ const Header = () => {
       
       <div className="header-right">
         <button 
-          onClick={toggleDarkMode} 
-          className="icon-button"
-          aria-label="Toggle dark mode"
+          onClick={handleStreakClick} 
+          className="streak-button"
+          title="View your badges"
         >
-          {darkMode ? (
-            <BiIcons.BiSun className="mode-icon" />
-          ) : (
-            <BiIcons.BiMoon className="mode-icon" />
-          )}
+          <FaIcons.FaFire className={`streak-icon ${streak.currentStreak > 0 ? 'active' : ''}`} />
+          <span className="streak-count">{streak.currentStreak}</span>
         </button>
         
         <div className="profile-dropdown" ref={dropdownRef}>
@@ -149,11 +217,13 @@ const Header = () => {
                 <BiIcons.BiUser className="dropdown-icon" />
                 <span>Profile</span>
               </Link>
+
               <Link to="/settings" className="dropdown-item">
                 <BiIcons.BiCog className="dropdown-icon" />
                 <span>Settings</span>
               </Link>
-              <button onClick={handleLogout} className="dropdown-item logout-button">
+
+              <button onClick={logout} className="dropdown-item logout-button">
                 <BiIcons.BiLogOut className="dropdown-icon" />
                 <span>Logout</span>
               </button>
