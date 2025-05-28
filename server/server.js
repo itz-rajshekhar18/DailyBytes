@@ -33,9 +33,14 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
+const bookmarkRoutes = require('./routes/bookmarkRoutes');
+const streakRoutes = require('./routes/streakRoutes');
+
 // Routes
 app.use('/api/byte', byteRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/bookmarks', bookmarkRoutes);
+app.use('/api/streaks', streakRoutes);
 
 // Welcome route
 app.get('/', (req, res) => {
