@@ -276,13 +276,82 @@
   }
 }
 
+/* Dark Mode Styles */
+.dark .badges-container {
+  color: #f9fafb;
+}
+
+.dark .badges-header {
+  background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+}
+
+.dark .badges-header h2 {
+  background: linear-gradient(135deg, #60a5fa 0%, #93c5fd 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.dark .streak-stat {
+  background: #374151;
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.dark .streak-stat.current {
+  background: linear-gradient(135deg, #1e40af15 0%, #3b82f620 100%);
+  border-color: #3b82f6;
+}
+
+.dark .streak-stat.longest {
+  background: linear-gradient(135deg, #f59e0b15 0%, #f9731620 100%);
+  border-color: #f59e0b;
+}
+
+.dark .stat-label {
+  color: #9ca3af;
+}
+
+.dark .stat-value {
+  color: #f9fafb;
+}
+
+.dark .stat-unit {
+  color: #9ca3af;
+}
+
+.dark .badge {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.dark .badge.earned {
+  background: linear-gradient(to bottom, #374151, #4b5563);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.dark .badge h3 {
+  color: #f9fafb;
+}
+
+.dark .badge p {
+  color: #d1d5db;
+}
+
+.dark .earned-date {
+  background: linear-gradient(135deg, #10b98120 0%, #059669b15 100%);
+  color: #6ee7b7;
+  border-color: #10b98140;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
   .badges-container {
-    padding: 1rem;
+    padding: 1.5rem;
   }
   
   .badges-header {
     padding: 1.5rem;
+    margin-bottom: 2rem;
   }
   
   .badges-header h2 {
@@ -291,14 +360,25 @@
   
   .streak-stats {
     flex-direction: column;
-    align-items: center;
-  }
-  
-  .streak-stat {
-    width: 100%;
+    gap: 1rem;
   }
   
   .badges-grid {
     grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .badges-container {
+    padding: 1rem;
+  }
+  
+  .badge {
+    padding: 1.5rem;
+  }
+  
+  .badge-icon {
+    font-size: 2rem;
   }
 }

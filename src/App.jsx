@@ -4,6 +4,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './context/AuthContext';
 import { BookmarkProvider } from './context/BookmarkContext';
 import { StreakProvider } from './context/StreakContext';
+import { ThemeProvider } from './context/ThemeContext';
 import AuthContext from './context/AuthContext';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -12,6 +13,7 @@ import BytesBrowser from './components/BytesBrowser';
 import ByteDetail from './components/ByteDetail';
 import BookmarkedBytes from './components/BookmarkedBytes';
 import Badges from './components/Badges';
+import Profile from './components/Profile';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import Footer from './components/Footer';
@@ -121,60 +123,74 @@ const App = () => {
       hostedDomain="*"
       uxMode="popup"
     >
-      <AuthProvider>
-        <BookmarkProvider>
-          <StreakProvider>
-            <Router>
-              <Routes>
-                {/* Auth routes */}
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/signup" element={<SignupPage />} />
-                <Route path="/google-auth-success" element={<GoogleAuthSuccess />} />
-              
-              {/* Protected routes */}
-              <Route path="/" element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <HomePage />
-                  </MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/all-bytes" element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <BytesBrowser />
-                  </MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/byte/:id" element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <ByteDetail />
-                  </MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/bookmarks" element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <BookmarkedBytes />
-                  </MainLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/badges" element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <Badges />
-                  </MainLayout>
-                </ProtectedRoute>
-              } />
-              
-              {/* Redirect any unknown routes to login */}
-              <Route path="*" element={<Navigate to="/login" />} />
-            </Routes>
-          </Router>
-        </StreakProvider>
-      </BookmarkProvider>
-    </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <BookmarkProvider>
+            <StreakProvider>
+              <Router 
+                future={{
+                  v7_startTransition: true,
+                  v7_relativeSplatPath: true
+                }}
+              >
+                <Routes>
+                  {/* Auth routes */}
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/signup" element={<SignupPage />} />
+                  <Route path="/google-auth-success" element={<GoogleAuthSuccess />} />
+                
+                {/* Protected routes */}
+                <Route path="/" element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <HomePage />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/all-bytes" element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <BytesBrowser />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/byte/:id" element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <ByteDetail />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/bookmarks" element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <BookmarkedBytes />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/badges" element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <Badges />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/profile" element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <Profile />
+                    </MainLayout>
+                  </ProtectedRoute>
+                } />
+                
+                {/* Redirect any unknown routes to login */}
+                <Route path="*" element={<Navigate to="/login" />} />
+              </Routes>
+            </Router>
+          </StreakProvider>
+        </BookmarkProvider>
+      </AuthProvider>
+    </ThemeProvider>
     </GoogleOAuthProvider>
   );
 };

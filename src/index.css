@@ -30,15 +30,68 @@ body {
   
   /* Hero Section Styles */
   .hero {
-    background: url('../assets/hero-image.jpg') no-repeat center center;
-    background-size: cover; /* Ensure the image covers the section */
-    height: 300px;
+    background: url('https://i.pinimg.com/736x/c5/dd/a3/c5dda30b4f4fa740b7d392d2494679b8.jpg') no-repeat center center;
+    background-size: cover;
+    background-attachment: fixed;
+    height: 500px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     text-align: center;
     padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 100%);
+    z-index: 1;
+    animation: backgroundPulse 8s ease-in-out infinite;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+    animation: heroFloat 10s ease-in-out infinite;
+    z-index: 1;
+  }
+
+  .hero > * {
+    position: relative;
+    z-index: 2;
+    animation: heroFadeIn 1.5s ease-out;
+  }
+
+  .hero h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+    background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: titleGlow 3s ease-in-out infinite alternate;
+  }
+
+  .hero p {
+    font-size: 1.5rem;
+    font-weight: 500;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
+    opacity: 0.95;
+    animation: subtitleSlide 1.5s ease-out 0.5s both;
   }
   
   /* Bytes Section Styles */
@@ -313,4 +366,243 @@ body {
   .incorrect {
     color: #f44336;
     font-weight: bold;
+  }
+
+  /* Dark Mode Global Styles */
+  .dark {
+    color-scheme: dark;
+  }
+  
+  .dark body {
+    background-color: #111827;
+    color: #f9fafb;
+  }
+  
+  .dark .hero {
+    background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+    color: #f9fafb;
+  }
+  
+  .dark .bytes {
+    background-color: #1f2937;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  }
+  
+  .dark .bytes h3 {
+    color: #f9fafb;
+  }
+  
+  .dark .footer {
+    background-color: #1f2937;
+    color: #d1d5db;
+  }
+  
+  .dark .bytes-browser {
+    color: #f9fafb;
+  }
+  
+  .dark .bytes-browser h2 {
+    color: #f9fafb;
+  }
+  
+  .dark .filters {
+    background: #374151;
+    border: 1px solid #4b5563;
+  }
+  
+  .dark .filter-item label {
+    color: #f9fafb;
+  }
+  
+  .dark .filter-item select,
+  .dark .filter-item input {
+    background: #1f2937;
+    border-color: #4b5563;
+    color: #f9fafb;
+  }
+  
+  .dark .filter-item select:focus,
+  .dark .filter-item input:focus {
+    border-color: #3b82f6;
+  }
+  
+  .dark .byte-card {
+    background: #1f2937;
+    border-color: #374151;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  }
+  
+  .dark .byte-card h3 {
+    color: #f9fafb;
+  }
+  
+  .dark .byte-meta {
+    color: #9ca3af;
+  }
+  
+  .dark .tag {
+    background: #374151;
+    color: #d1d5db;
+    border-color: #4b5563;
+  }
+  
+  .dark .load-more {
+    background-color: #3b82f6;
+    color: white;
+  }
+  
+  .dark .load-more:hover {
+    background-color: #2563eb;
+  }
+  
+  .dark .view-details {
+    background-color: #3b82f6;
+    color: white;
+  }
+  
+  .dark .view-details:hover {
+    background-color: #2563eb;
+  }
+  
+  .dark .byte-detail {
+    background: #1f2937;
+    color: #f9fafb;
+  }
+  
+  .dark .back-link a {
+    color: #3b82f6;
+  }
+  
+  .dark .back-link a:hover {
+    color: #2563eb;
+  }
+  
+  .dark .byte-content h2 {
+    color: #f9fafb;
+  }
+  
+  .dark .byte-section h3 {
+    color: #f9fafb;
+  }
+  
+  .dark .submit-answer {
+    background-color: #3b82f6;
+  }
+  
+  .dark .submit-answer:hover {
+    background-color: #2563eb;
+  }
+  
+  .dark .correct {
+    color: #10b981;
+  }
+  
+  .dark .incorrect {
+    color: #ef4444;
+  }
+
+  /* Additional Dark Mode Styles for Quiz */
+  .dark .quiz {
+    background-color: #374151;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .dark .quiz h3 {
+    color: #f9fafb;
+  }
+
+  .dark .quiz label {
+    color: #e5e7eb;
+    background-color: #4b5563;
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin: 0.5rem 0;
+    border: 1px solid #6b7280;
+    transition: all 0.2s ease;
+  }
+
+  .dark .quiz label:hover {
+    background-color: #6b7280;
+    border-color: #3b82f6;
+  }
+
+  .dark .quiz input[type="radio"] {
+    accent-color: #3b82f6;
+  }
+
+  /* Dark mode for bookmarks page and other components */
+  .dark .bookmarks-container {
+    color: #f9fafb;
+  }
+
+  .dark .bookmarks-container h2 {
+    color: #f9fafb;
+  }
+
+  .dark .no-bookmarks {
+    color: #9ca3af;
+  }
+
+  /* Loading and error states */
+  .dark .loading {
+    color: #f9fafb;
+  }
+
+  .dark .error-message {
+    color: #f87171;
+    background-color: #1f2937;
+  }
+
+  @keyframes heroFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes titleGlow {
+    from {
+      filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+    }
+    to {
+      filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.4));
+    }
+  }
+
+  @keyframes subtitleSlide {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 0.95;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes backgroundPulse {
+    0%, 100% {
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 100%);
+    }
+    50% {
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 100%);
+    }
+  }
+
+  @keyframes heroFloat {
+    0%, 100% {
+      transform: translate(0, 0) rotate(0deg);
+    }
+    33% {
+      transform: translate(30px, -30px) rotate(1deg);
+    }
+    66% {
+      transform: translate(-20px, 20px) rotate(-1deg);
+    }
   }

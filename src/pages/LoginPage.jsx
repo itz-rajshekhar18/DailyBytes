@@ -5,6 +5,7 @@ import AuthContext from '../context/AuthContext';
 import * as jwt_decode from 'jwt-decode';
 import './Auth.css';
 import * as BiIcons from 'react-icons/bi';
+import * as FaIcons from 'react-icons/fa';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -12,7 +13,9 @@ const LoginPage = () => {
     password: '',
   });
   const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const { login, googleLogin, error, clearError, user } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -25,15 +28,27 @@ const LoginPage = () => {
 
   const { email, password } = formData;
 
+  // Clear today's byte data for new login
+  const clearTodayByteData = () => {
+    const keys = Object.keys(localStorage);
+    keys.forEach(key => {
+      if (key.startsWith('byte_response_') || key.startsWith('streak_shown_')) {
+        localStorage.removeItem(key);
+      }
+    });
+  };
+
   const onChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setErrorMessage('');
+    setSuccessMessage('');
     clearError();
   };
 
   const onSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
+    setSuccessMessage('');
     
     if (!email || !password) {
       setErrorMessage('Please fill in all fields');
@@ -43,23 +58,30 @@ const LoginPage = () => {
     try {
       const userData = await login(email, password);
       if (userData) {
-        navigate('/', { replace: true });
+        // Clear today's byte data for fresh start
+        clearTodayByteData();
+        
+        setSuccessMessage('Login successful! Redirecting...');
+        setTimeout(() => {
+          navigate('/', { replace: true });
+        }, 1500);
       }
     } catch (error) {
       console.error('Login error:', error);
       const errorMsg = error.response?.data?.message || 
                       error.message || 
                       'Login failed. Please try again.';
-      setErrorMessage(errorMsg);
       
-      // If error indicates no account exists, suggest signup
-      if (errorMsg.includes('No account found')) {
-        setErrorMessage('No account found with this email. Redirecting you to signup page...');
+      // Handle specific error cases
+      if (errorMsg.includes('User not found') || errorMsg.includes('No account found') || errorMsg.includes('No user found')) {
+        setErrorMessage('No account found with this email. Redirecting to signup page...');
         setTimeout(() => {
           navigate('/signup');
-        }, 2000);
-      } else if (errorMsg.includes('Invalid password')) {
+        }, 2500);
+      } else if (errorMsg.includes('Invalid password') || errorMsg.includes('Incorrect password') || errorMsg.includes('Invalid credentials')) {
         setErrorMessage('Incorrect password. Please try again.');
+      } else {
+        setErrorMessage(errorMsg);
       }
     }
   };
@@ -86,7 +108,13 @@ const LoginPage = () => {
       
       const userData = await googleLogin(googleData);
       if (userData) {
-        navigate('/', { replace: true });
+        // Clear today's byte data for fresh start
+        clearTodayByteData();
+        
+        setSuccessMessage('Google login successful! Redirecting...');
+        setTimeout(() => {
+          navigate('/', { replace: true });
+        }, 1500);
       }
     } catch (error) {
       console.error('Google login error:', error);
@@ -123,10 +151,24 @@ const LoginPage = () => {
         {(errorMessage || error) && (
           <div className={`message ${errorMessage?.includes('Redirecting') ? 'info' : 'error'}`}>
             <span className="message-icon">
-              {errorMessage?.includes('Redirecting') ? '🔄' : '⚠️'}
+              {errorMessage?.includes('Redirecting') ? 
+                <FaIcons.FaInfoCircle /> : 
+                <FaIcons.FaExclamationTriangle />
+              }
             </span>
             <span className="message-text">
               {errorMessage || error}
+            </span>
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="message success">
+            <span className="message-icon">
+              <FaIcons.FaCheckCircle />
+            </span>
+            <span className="message-text">
+              {successMessage}
             </span>
           </div>
         )}
@@ -143,21 +185,33 @@ const LoginPage = () => {
               placeholder="Enter your email"
               className="form-input"
               autoComplete="email"
+              required
             />
           </div>
           
           <div className="form-group">
             <label htmlFor="password" className="form-label">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={password}
-              onChange={onChange}
-              placeholder="Enter your password"
-              className="form-input"
-              autoComplete="current-password"
-            />
+            <div className="password-input-container">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                name="password"
+                value={password}
+                onChange={onChange}
+                placeholder="Enter your password"
+                className="form-input password-input"
+                autoComplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <FaIcons.FaEyeSlash /> : <FaIcons.FaEye />}
+              </button>
+            </div>
           </div>
           
           <div className="remember-forgot">
@@ -183,25 +237,27 @@ const LoginPage = () => {
         </div>
         
         <div className="google-btn-container">
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={handleGoogleError}
-            useOneTap={false}
-            type="standard"
-            size="large"
-            theme="outline"
-            text="signin_with"
-            shape="rectangular"
-            width="100%"
-            locale="en"
-            cookiePolicy="single_host_origin"
-            auto_select={false}
-            context="signin"
-          />
+          <button className="google-button">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              useOneTap={false}
+              type="standard"
+              size="large"
+              theme="outline"
+              text="signin_with"
+              shape="rectangular"
+              width={400}
+              locale="en"
+              cookiePolicy="single_host_origin"
+              auto_select={false}
+              context="signin"
+            />
+          </button>
         </div>
         
         <p className="auth-redirect">
-          Don't have an account? <Link to="/signup" onClick={(e) => { e.preventDefault(); window.location.href = '/signup'; }}>Sign up</Link>
+          Don't have an account? <Link to="/signup">Sign up</Link>
         </p>
       </div>
     </div>

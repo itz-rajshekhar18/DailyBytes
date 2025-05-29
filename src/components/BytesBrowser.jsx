@@ -65,6 +65,22 @@ const BytesBrowser = () => {
       });
   }, [tags, tagSearch]);
 
+  // Enhanced highlighting function
+  const highlightMatch = (text, searchTerm) => {
+    if (!searchTerm) return text;
+    
+    const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, index) => 
+      regex.test(part) ? (
+        <span key={index} className="highlight">{part}</span>
+      ) : (
+        part
+      )
+    );
+  };
+
   // Fetch bytes with filters
   const fetchBytes = useCallback((category = '', tag = '', page = 1) => {
     setLoading(true);
@@ -197,6 +213,81 @@ const BytesBrowser = () => {
     };
   }, []);
 
+  // Handle category input change with better debouncing
+  const handleCategoryInputChange = (e) => {
+    const value = e.target.value;
+    setCategorySearch(value);
+    setShowCategorySuggestions(true);
+    
+    if (value === '') {
+      setSelectedCategory('');
+      debouncedFetch('', selectedTag);
+    } else {
+      // If exact match exists, use it immediately
+      const exactMatch = categories.find(cat => 
+        cat.toLowerCase() === value.toLowerCase()
+      );
+      if (exactMatch) {
+        setSelectedCategory(exactMatch);
+        debouncedFetch(exactMatch, selectedTag);
+      } else {
+        // Otherwise search with partial match
+        debouncedFetch(value, selectedTag);
+      }
+    }
+  };
+
+  // Handle tag input change with better debouncing
+  const handleTagInputChange = (e) => {
+    const value = e.target.value;
+    setTagSearch(value);
+    setShowTagSuggestions(true);
+    
+    if (value === '') {
+      setSelectedTag('');
+      debouncedFetch(selectedCategory, '');
+    } else {
+      // If exact match exists, use it immediately
+      const exactMatch = tags.find(tag => 
+        tag.toLowerCase() === value.toLowerCase()
+      );
+      if (exactMatch) {
+        setSelectedTag(exactMatch);
+        debouncedFetch(selectedCategory, exactMatch);
+      } else {
+        // Otherwise search with partial match
+        debouncedFetch(selectedCategory, value);
+      }
+    }
+  };
+
+  // Enhanced keyboard navigation
+  const handleCategoryKeyDown = (e) => {
+    if (e.key === 'Enter' && filteredCategories.length > 0) {
+      e.preventDefault();
+      handleCategorySelect(filteredCategories[0]);
+    } else if (e.key === 'Escape') {
+      setShowCategorySuggestions(false);
+      setCategorySearch(selectedCategory);
+    } else if (e.key === 'ArrowDown' && filteredCategories.length > 0) {
+      e.preventDefault();
+      // Focus first suggestion (could be enhanced further)
+    }
+  };
+
+  const handleTagKeyDown = (e) => {
+    if (e.key === 'Enter' && filteredTags.length > 0) {
+      e.preventDefault();
+      handleTagSelect(filteredTags[0]);
+    } else if (e.key === 'Escape') {
+      setShowTagSuggestions(false);
+      setTagSearch(selectedTag);
+    } else if (e.key === 'ArrowDown' && filteredTags.length > 0) {
+      e.preventDefault();
+      // Focus first suggestion (could be enhanced further)
+    }
+  };
+
   return (
     <section className="bytes-browser">
       <h2>Browse Psychology Bytes</h2>
@@ -210,50 +301,21 @@ const BytesBrowser = () => {
                 type="text"
                 placeholder="Search categories..."
                 value={categorySearch}
-                onChange={(e) => {
-                  setCategorySearch(e.target.value);
-                  setShowCategorySuggestions(true);
-                  if (e.target.value === '') {
-                    setSelectedCategory('');
-                    debouncedFetch('', selectedTag);
-                  } else {
-                    debouncedFetch(e.target.value, selectedTag);
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && filteredCategories.length > 0) {
-                    handleCategorySelect(filteredCategories[0]);
-                  }
-                }}
+                onChange={handleCategoryInputChange}
+                onKeyDown={handleCategoryKeyDown}
                 onFocus={() => setShowCategorySuggestions(true)}
               />
               {showCategorySuggestions && filteredCategories.length > 0 && (
                 <div className="suggestions-list">
-                  {filteredCategories.map((category, index) => {
-                    const lowerCategory = category.toLowerCase();
-                    const lowerSearch = categorySearch.toLowerCase();
-                    const startIndex = lowerCategory.indexOf(lowerSearch);
-                    
-                    return (
-                      <div
-                        key={index}
-                        className={`suggestion-item ${selectedCategory === category ? 'selected' : ''}`}
-                        onClick={() => handleCategorySelect(category)}
-                      >
-                        {startIndex >= 0 ? (
-                          <>
-                            {category.substring(0, startIndex)}
-                            <span className="highlight">
-                              {category.substring(startIndex, startIndex + categorySearch.length)}
-                            </span>
-                            {category.substring(startIndex + categorySearch.length)}
-                          </>
-                        ) : (
-                          category
-                        )}
-                      </div>
-                    );
-                  })}
+                  {filteredCategories.map((category, index) => (
+                    <div
+                      key={index}
+                      className={`suggestion-item ${selectedCategory === category ? 'selected' : ''}`}
+                      onClick={() => handleCategorySelect(category)}
+                    >
+                      {highlightMatch(category, categorySearch)}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -266,50 +328,21 @@ const BytesBrowser = () => {
                 type="text"
                 placeholder="Search tags..."
                 value={tagSearch}
-                onChange={(e) => {
-                  setTagSearch(e.target.value);
-                  setShowTagSuggestions(true);
-                  if (e.target.value === '') {
-                    setSelectedTag('');
-                    debouncedFetch(selectedCategory, '');
-                  } else {
-                    debouncedFetch(selectedCategory, e.target.value);
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && filteredTags.length > 0) {
-                    handleTagSelect(filteredTags[0]);
-                  }
-                }}
+                onChange={handleTagInputChange}
+                onKeyDown={handleTagKeyDown}
                 onFocus={() => setShowTagSuggestions(true)}
               />
               {showTagSuggestions && filteredTags.length > 0 && (
                 <div className="suggestions-list">
-                  {filteredTags.map((tag, index) => {
-                    const lowerTag = tag.toLowerCase();
-                    const lowerSearch = tagSearch.toLowerCase();
-                    const startIndex = lowerTag.indexOf(lowerSearch);
-                    
-                    return (
-                      <div
-                        key={index}
-                        className={`suggestion-item ${selectedTag === tag ? 'selected' : ''}`}
-                        onClick={() => handleTagSelect(tag)}
-                      >
-                        {startIndex >= 0 ? (
-                          <>
-                            {tag.substring(0, startIndex)}
-                            <span className="highlight">
-                              {tag.substring(startIndex, startIndex + tagSearch.length)}
-                            </span>
-                            {tag.substring(startIndex + tagSearch.length)}
-                          </>
-                        ) : (
-                          tag
-                        )}
-                      </div>
-                    );
-                  })}
+                  {filteredTags.map((tag, index) => (
+                    <div
+                      key={index}
+                      className={`suggestion-item ${selectedTag === tag ? 'selected' : ''}`}
+                      onClick={() => handleTagSelect(tag)}
+                    >
+                      {highlightMatch(tag, tagSearch)}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

@@ -3,6 +3,16 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
+// Clear today's byte data for new login
+const clearTodayByteData = () => {
+  const keys = Object.keys(localStorage);
+  keys.forEach(key => {
+    if (key.startsWith('byte_response_') || key.startsWith('streak_shown_')) {
+      localStorage.removeItem(key);
+    }
+  });
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -25,6 +35,9 @@ export const AuthProvider = ({ children }) => {
       const response = await axios.post('http://localhost:5001/api/users', userData);
       const data = response.data;
       
+      // Clear today's byte data for fresh start
+      clearTodayByteData();
+      
       // Store user in localStorage
       localStorage.setItem('user', JSON.stringify(data));
       setUser(data);
@@ -44,6 +57,9 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       const response = await axios.post('http://localhost:5001/api/users/login', { email, password });
       const data = response.data;
+      
+      // Clear today's byte data for fresh start
+      clearTodayByteData();
       
       // Store user in localStorage
       localStorage.setItem('user', JSON.stringify(data));
@@ -84,6 +100,9 @@ export const AuthProvider = ({ children }) => {
       
       const data = response.data;
       
+      // Clear today's byte data for fresh start
+      clearTodayByteData();
+      
       // Store user in localStorage
       localStorage.setItem('user', JSON.stringify(data));
       setUser(data);
@@ -121,6 +140,7 @@ export const AuthProvider = ({ children }) => {
         googleLogin,
         logout,
         clearError,
+        clearTodayByteData,
       }}
     >
       {children}

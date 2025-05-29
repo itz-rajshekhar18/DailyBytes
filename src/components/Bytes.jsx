@@ -121,7 +121,7 @@ const Bytes = () => {
 
           // Check for badges
           const badgeResponse = await axios.get(
-            'http://localhost:5001/api/user/badges',
+            'http://localhost:5001/api/streaks',
             {
               headers: {
                 Authorization: `Bearer ${user?.token}`,
@@ -129,7 +129,7 @@ const Bytes = () => {
             }
           );
 
-          if (badgeResponse.data.data.newBadges?.length > 0) {
+          if (badgeResponse.data.data.badges?.length > 0) {
             setTimeout(() => {
               navigate('/badges');
             }, 2000);

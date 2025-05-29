@@ -2,14 +2,17 @@ import React, { useState, useContext, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import * as BiIcons from 'react-icons/bi';
 import * as FaIcons from 'react-icons/fa';
+import * as MdIcons from 'react-icons/md';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import { useStreak } from '../context/StreakContext';
+import { useTheme } from '../context/ThemeContext';
 import './Header.css';
 
 const Header = () => {
   const { user, logout } = useContext(AuthContext);
   const { streak, updateStreak } = useStreak();
+  const { isDark, toggleTheme } = useTheme();
   const [showBadgeNotification, setShowBadgeNotification] = useState(false);
   const [newBadge, setNewBadge] = useState(null);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -102,30 +105,41 @@ const Header = () => {
       }
     };
     
-    document.addEventListener('mousedown', handleClickOutside);
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+    
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
     };
-  }, []);
+  }, [dropdownOpen]);
+  
+  // Handle dropdown toggle
+  const toggleDropdown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Dropdown toggled, current state:', dropdownOpen);
+    setDropdownOpen(prev => !prev);
+  };
   
   // Handle logout
-  const handleLogout = () => {
+  const handleLogout = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDropdownOpen(false);
     logout();
-    window.location.href = '/login';
+    navigate('/login');
   };
 
-  // Handle streak animations, but only for actual streak changes, not page loads
-  // We're not going to animate the streak on page load, only when the Bytes component updates it
-  /*
-  useEffect(() => {
-    // Only animate if there was a real increase
-    if (prevStreakRef.current !== 0 && streak.currentStreak > prevStreakRef.current) {
-      setIsAnimating(true);
-      setTimeout(() => setIsAnimating(false), 1000);
-    }
-    prevStreakRef.current = streak.currentStreak;
-  }, [streak.currentStreak]);
-  */
+  // Handle profile navigation
+  const handleProfileClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDropdownOpen(false);
+    navigate('/profile');
+  };
 
   return (
     <header className="header">
@@ -170,13 +184,26 @@ const Header = () => {
           <FaIcons.FaFire className={`streak-icon ${streak.currentStreak > 0 ? 'active' : ''}`} />
           <span className="streak-count">{streak.currentStreak}</span>
         </button>
+
+        <button 
+          onClick={toggleTheme} 
+          className="theme-button"
+          title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          {isDark ? (
+            <MdIcons.MdLightMode className="theme-icon" />
+          ) : (
+            <MdIcons.MdDarkMode className="theme-icon" />
+          )}
+        </button>
         
         <div className="profile-dropdown" ref={dropdownRef}>
           <button 
             className="profile-button"
-            onClick={() => setDropdownOpen(!dropdownOpen)}
+            onClick={toggleDropdown}
             aria-haspopup="true"
             aria-expanded={dropdownOpen}
+            type="button"
           >
             {user?.profilePicture ? (
               <img 
@@ -190,45 +217,38 @@ const Header = () => {
               </div>
             )}
             <span className="profile-name">{getDisplayName(user)}</span>
-            <BiIcons.BiChevronDown className="dropdown-arrow" />
+            <BiIcons.BiChevronDown className={`dropdown-arrow ${dropdownOpen ? 'open' : ''}`} />
           </button>
           
-          {dropdownOpen && (
-            <div className="dropdown-menu">
-              <div className="user-info">
-                {user?.profilePicture ? (
-                  <img 
-                    src={user.profilePicture} 
-                    alt="Profile" 
-                    className="dropdown-profile-image" 
-                  />
-                ) : (
-                  <div className="dropdown-profile-initial">
-                    {getInitial(user)}
-                  </div>
-                )}
-                <div className="user-details">
-                  <span className="user-name">{getDisplayName(user)}</span>
-                  <span className="user-email">{user?.email}</span>
+          <div className={`dropdown-menu ${dropdownOpen ? 'show' : 'hide'}`}>
+            <div className="user-info">
+              {user?.profilePicture ? (
+                <img 
+                  src={user.profilePicture} 
+                  alt="Profile" 
+                  className="dropdown-profile-image" 
+                />
+              ) : (
+                <div className="dropdown-profile-initial">
+                  {getInitial(user)}
                 </div>
+              )}
+              <div className="user-details">
+                <span className="user-name">{getDisplayName(user)}</span>
+                <span className="user-email">{user?.email}</span>
               </div>
-              
-              <Link to="/profile" className="dropdown-item">
-                <BiIcons.BiUser className="dropdown-icon" />
-                <span>Profile</span>
-              </Link>
-
-              <Link to="/settings" className="dropdown-item">
-                <BiIcons.BiCog className="dropdown-icon" />
-                <span>Settings</span>
-              </Link>
-
-              <button onClick={logout} className="dropdown-item logout-button">
-                <BiIcons.BiLogOut className="dropdown-icon" />
-                <span>Logout</span>
-              </button>
             </div>
-          )}
+            
+            <button onClick={handleProfileClick} className="dropdown-item">
+              <BiIcons.BiUser className="dropdown-icon" />
+              <span>Profile</span>
+            </button>
+
+            <button onClick={handleLogout} className="dropdown-item logout-button">
+              <BiIcons.BiLogOut className="dropdown-icon" />
+              <span>Logout</span>
+            </button>
+          </div>
         </div>
       </div>
     </header>
