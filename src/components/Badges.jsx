@@ -38,7 +38,7 @@ const Badges = () => {
             Authorization: `Bearer ${user?.token}`,
           },
         };
-        const response = await axios.get('http://localhost:5001/api/streaks', config);
+        const response = await axios.get('https://dailybytes-1.onrender.com/streaks', config);
         setStreakData(response.data.data);
       } catch (error) {
         console.error('Error fetching streak data:', error);
