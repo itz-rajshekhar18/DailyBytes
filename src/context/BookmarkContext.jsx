@@ -31,7 +31,7 @@ export const BookmarkProvider = ({ children }) => {
         },
       };
 
-      const response = await axios.get('http://localhost:5001/api/bookmarks', config);
+      const response = await axios.get('https://dailybytes-1.onrender.com/bookmarks', config);
       setBookmarks(response.data.data);
     } catch (error) {
       setError(error.response?.data?.message || 'Failed to fetch bookmarks');
@@ -76,7 +76,7 @@ export const BookmarkProvider = ({ children }) => {
         },
       };
 
-      await axios.delete(`http://localhost:5001/api/bookmarks/${byteId}`, config);
+      await axios.delete(`https://dailybytes-1.onrender.com/bookmarks/${byteId}`, config);
       setBookmarks(prev => prev.filter(bookmark => bookmark.byte._id !== byteId));
       return true;
     } catch (error) {
@@ -96,7 +96,7 @@ export const BookmarkProvider = ({ children }) => {
       };
 
       const response = await axios.get(
-        `http://localhost:5001/api/bookmarks/${byteId}/check`,
+        `https://dailybytes-1.onrender.com/bookmarks/${byteId}/check`,
         config
       );
       
