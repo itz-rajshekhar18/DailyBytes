@@ -25,7 +25,7 @@ const Bytes = () => {
   useEffect(() => {
     const fetchTodayByte = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/byte/today');
+        const response = await axios.get('https://dailybytes-1.onrender.com/byte/today');
         const byteData = response.data.data;
         setTodayByte(byteData);
         
@@ -121,7 +121,7 @@ const Bytes = () => {
 
           // Check for badges
           const badgeResponse = await axios.get(
-            'http://localhost:5001/api/streaks',
+            'https://dailybytes-1.onrender.com/streaks',
             {
               headers: {
                 Authorization: `Bearer ${user?.token}`,
