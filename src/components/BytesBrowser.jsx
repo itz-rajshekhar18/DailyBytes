@@ -84,7 +84,7 @@ const BytesBrowser = () => {
   // Fetch bytes with filters
   const fetchBytes = useCallback((category = '', tag = '', page = 1) => {
     setLoading(true);
-    let url = 'http://localhost:5001/api/byte?';
+    let url = 'https://dailybytes-1.onrender.com/byte?';
     const params = new URLSearchParams();
     
     if (category) params.append('category', category);
