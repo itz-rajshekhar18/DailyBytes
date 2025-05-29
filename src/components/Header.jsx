@@ -44,7 +44,7 @@ const Header = () => {
             Authorization: `Bearer ${user?.token}`,
           },
         };
-        const response = await axios.get('http://localhost:5001/api/streaks', config);
+        const response = await axios.get('https://dailybytes-1.onrender.com/streaks', config);
         const newStreakData = response.data.data;
         
         // Check for new badges
