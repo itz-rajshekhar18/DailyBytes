@@ -62,7 +62,7 @@ const Profile = () => {
         },
       };
 
-      const response = await axios.post('http://localhost:5001/api/users/upload-profile-picture', formData, config);
+      const response = await axios.post('https://dailybytes-1.onrender.com/users/upload-profile-picture', formData, config);
       
       setProfileData(prev => ({
         ...prev,
@@ -88,7 +88,7 @@ const Profile = () => {
         },
       };
 
-      await axios.delete('http://localhost:5001/api/users/remove-profile-picture', config);
+      await axios.delete('https://dailybytes-1.onrender.com/users/remove-profile-picture', config);
       
       setProfileData(prev => ({
         ...prev,
@@ -125,7 +125,7 @@ const Profile = () => {
         profilePicture: profileData.profilePicture
       };
 
-      const response = await axios.put('http://localhost:5001/api/users/profile', updateData, config);
+      const response = await axios.put('https://dailybytes-1.onrender.com/users/profile', updateData, config);
       
       // Update user context
       const updatedUser = { ...user, ...response.data };
