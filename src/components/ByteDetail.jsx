@@ -20,7 +20,7 @@ const ByteDetail = () => {
 
   useEffect(() => {
     setLoading(true);
-    axios.get(`http://localhost:5001/api/byte/${id}`)
+    axios.get(`https://dailybytes-1.onrender.com/byte/${id}`)
       .then(response => {
         setByte(response.data.data);
         return response.data.data;
