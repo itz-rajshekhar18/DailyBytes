@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setError(null);
       setLoading(true);
-      const response = await axios.post('http://localhost:5001/api/users', userData);
+      const response = await axios.post('https://dailybytes-1.onrender.com/users', userData);
       const data = response.data;
       
       // Clear today's byte data for fresh start
@@ -55,7 +55,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setError(null);
       setLoading(true);
-      const response = await axios.post('http://localhost:5001/api/users/login', { email, password });
+      const response = await axios.post('https://dailybytes-1.onrender.com/users/login', { email, password });
       const data = response.data;
       
       // Clear today's byte data for fresh start
@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }) => {
         throw new Error('Invalid email format');
       }
 
-      const response = await axios.post('http://localhost:5001/api/users/google', {
+      const response = await axios.post('https://dailybytes-1.onrender.com/users/google', {
         firstName: googleData.firstName,
         lastName: googleData.lastName,
         email: googleData.email,
