@@ -1,3 +1,19 @@
+<div align="center">
+
+## 🌐 Live Deployment
+
+You can access the live version of DailyByte here:  
+🔗 [https://mindfulbyte-frontend.onrender.com/login](https://mindfulbyte-frontend.onrender.com/login)
+
+Feel free to explore the platform and try out the features!
+
+
+</div> 
+
+
+
+
+
 # 🧠 Mindful Byte - Daily Programming Challenges Platform
 
 ## 📖 Project Overview
