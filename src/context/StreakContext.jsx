@@ -25,7 +25,7 @@ export const StreakProvider = ({ children }) => {
               Authorization: `Bearer ${user.token}`,
             },
           };
-          const response = await axios.get('http://localhost:5001/api/streaks', config);
+          const response = await axios.get('https://dailybytes-1.onrender.com/streaks', config);
           setStreak(response.data.data);
           setLastFetched(now);
         } catch (error) {
@@ -48,10 +48,10 @@ export const StreakProvider = ({ children }) => {
       };
 
       // Update streak on server
-      await axios.put('http://localhost:5001/api/streaks/update', {}, config);
+      await axios.put('https://dailybytes-1.onrender.com/streaks/update', {}, config);
       
       // Then fetch the latest streak data
-      const response = await axios.get('http://localhost:5001/api/streaks', config);
+      const response = await axios.get('https://dailybytes-1.onrender.com/streaks', config);
       setStreak(response.data.data);
       setLastFetched(Date.now());
       return response.data.data;
