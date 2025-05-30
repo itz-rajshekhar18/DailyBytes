@@ -23,9 +23,20 @@ const UserSchema = new mongoose.Schema({
       'Please add a valid email'
     ]
   },
+  phone: {
+    type: String,
+    trim: true,
+    maxlength: [15, 'Phone number cannot be more than 15 characters']
+  },
   password: {
     type: String,
     select: false
+  },
+  profilePicture: {
+    type: String,
+    default: function() {
+      return `https://ui-avatars.com/api/?name=${this.firstName}+${this.lastName}&background=0D8ABC&color=fff`;
+    }
   },
   avatar: {
     type: String,
@@ -46,5 +57,25 @@ const UserSchema = new mongoose.Schema({
     default: Date.now
   }
 });
+
+// Encrypt password using bcrypt
+UserSchema.pre('save', async function (next) {
+  if (!this.isModified('password') || !this.password) {
+    next();
+    return;
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
+
+// Match user entered password to hashed password in database
+UserSchema.methods.matchPassword = async function (enteredPassword) {
+  if (!this.password || !enteredPassword) {
+    return false;
+  }
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 
 module.exports = mongoose.model('User', UserSchema);

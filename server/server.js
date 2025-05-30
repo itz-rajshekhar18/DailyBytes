@@ -27,6 +27,8 @@ app.use(cors({
   exposedHeaders: ['Cross-Origin-Opener-Policy', 'Cross-Origin-Embedder-Policy']
 }));
 
+// Serve uploaded files statically
+app.use('/uploads', express.static('uploads'));
 
 // Logger middleware for development
 if (process.env.NODE_ENV === 'development') {

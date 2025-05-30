@@ -59,12 +59,18 @@ const registerUser = asyncHandler(async (req, res) => {
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
-  // Check for user email
-  const user = await User.findOne({ email });
+  // Check for user email and explicitly select password field
+  const user = await User.findOne({ email }).select('+password');
 
   if (!user) {
     res.status(401);
     throw new Error('No account found with this email. Please sign up.');
+  }
+
+  // Check if user has a password (not a Google-only user)
+  if (!user.password) {
+    res.status(401);
+    throw new Error('This account was created with Google. Please sign in with Google.');
   }
 
   if (!(await user.matchPassword(password))) {
@@ -79,8 +85,7 @@ const loginUser = asyncHandler(async (req, res) => {
     email: user.email,
     token: generateToken(user._id),
   });
-  }
-);
+});
 
 // @desc    Google OAuth login/register
 // @route   POST /api/users/google
@@ -213,6 +218,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
+      phone: user.phone,
       profilePicture: user.profilePicture,
     });
   } else {
@@ -221,10 +227,105 @@ const getUserProfile = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc    Update user profile
+// @route   PUT /api/users/profile
+// @access  Private
+const updateUserProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  const { firstName, lastName, email, phone, profilePicture } = req.body;
+
+  // Check if email is being changed and if it already exists
+  if (email && email !== user.email) {
+    const emailExists = await User.findOne({ email });
+    if (emailExists) {
+      res.status(400);
+      throw new Error('Email already in use');
+    }
+  }
+
+  // Update user fields
+  user.firstName = firstName || user.firstName;
+  user.lastName = lastName || user.lastName;
+  user.email = email || user.email;
+  user.phone = phone || user.phone;
+  user.profilePicture = profilePicture || user.profilePicture;
+
+  const updatedUser = await user.save();
+
+  res.json({
+    _id: updatedUser._id,
+    firstName: updatedUser.firstName,
+    lastName: updatedUser.lastName,
+    email: updatedUser.email,
+    phone: updatedUser.phone,
+    profilePicture: updatedUser.profilePicture,
+  });
+});
+
+// @desc    Upload profile picture
+// @route   POST /api/users/upload-profile-picture
+// @access  Private
+const uploadProfilePicture = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  if (!req.file) {
+    res.status(400);
+    throw new Error('No file uploaded');
+  }
+
+  // For now, we'll use a simple file upload mechanism
+  // In production, you'd want to use a cloud storage service like AWS S3, Cloudinary, etc.
+  const profilePictureUrl = `/uploads/profiles/${req.file.filename}`;
+  
+  user.profilePicture = profilePictureUrl;
+  const updatedUser = await user.save();
+
+  res.json({
+    profilePictureUrl: updatedUser.profilePicture,
+    message: 'Profile picture uploaded successfully'
+  });
+});
+
+// @desc    Remove profile picture
+// @route   DELETE /api/users/remove-profile-picture
+// @access  Private
+const removeProfilePicture = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  // Reset to default avatar
+  user.profilePicture = `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=0D8ABC&color=fff`;
+  
+  const updatedUser = await user.save();
+
+  res.json({
+    profilePictureUrl: updatedUser.profilePicture,
+    message: 'Profile picture removed successfully'
+  });
+});
+
 module.exports = {
   registerUser,
   loginUser,
   googleAuth,
   googleCallback,
   getUserProfile,
+  updateUserProfile,
+  uploadProfilePicture,
+  removeProfilePicture,
 };

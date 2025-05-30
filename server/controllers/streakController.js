@@ -34,6 +34,7 @@ exports.updateStreak = asyncHandler(async (req, res) => {
   let streak = await Streak.findOne({ user: userId });
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  
   if (!streak) {
     streak = await Streak.create({
       user: userId,
@@ -49,9 +50,19 @@ exports.updateStreak = asyncHandler(async (req, res) => {
     const diffDays = Math.floor((today - lastSolved) / (1000 * 60 * 60 * 24));
     
     if (diffDays === 0) {
-      // Already solved today
-      res.status(400);
-      throw new Error('Already completed today\'s byte');
+      // Already solved today - return current streak without error
+      res.status(200).json({
+        success: true,
+        data: {
+          currentStreak: streak.currentStreak,
+          maxStreak: streak.maxStreak,
+          lastSolvedDate: streak.lastSolvedDate,
+          badges: streak.badges,
+          newBadges: [],
+          message: 'Streak already updated for today'
+        }
+      });
+      return;
     } else if (diffDays === 1) {
       // Consecutive day
       streak.currentStreak += 1;
@@ -59,7 +70,7 @@ exports.updateStreak = asyncHandler(async (req, res) => {
         streak.maxStreak = streak.currentStreak;
       }
     } else {
-      // Streak broken
+      // Streak broken - reset to 1
       streak.currentStreak = 1;
     }
     
